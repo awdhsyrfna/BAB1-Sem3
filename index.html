@@ -3,8 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Permainan Mikroorganisma</title>
-
-<!-- IMPORTANT FOR PHONE -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -53,21 +51,23 @@
     .container {
         display: flex;
         flex-direction: column;
-        gap: 15px;
+        gap: 12px;
         margin-top: 15px;
     }
 
     .box {
         width: 100%;
-        min-height: 120px;
+        min-height: 80px;
         background: white;
         border-radius: 12px;
         padding: 10px;
         box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        overflow: hidden;
     }
 
     .dropzone {
-        border: 3px dashed #90e0ef;
+        border: 2px dashed #90e0ef;
+        cursor: pointer;
     }
 
     .dropzone.highlight {
@@ -79,9 +79,9 @@
         background: #caf0f8;
         margin: 6px 0;
         border-radius: 8px;
-        cursor: grab;
         font-size: 14px;
-        touch-action: none; /* VERY IMPORTANT */
+        cursor: pointer;
+        word-break: break-word;
     }
 
     .item.correct {
@@ -91,13 +91,18 @@
     .item.wrong {
         background: #ffadad !important;
     }
+
+    /* Make items wrap nicely in small screen */
+    .dropzone .item {
+        margin: 4px 2px;
+    }
 </style>
 </head>
 
 <body>
 
 <h2>Flora normal yang terdapat pada manusia</h2>
-<p>Letakkan mikroorganisma pada bahagian tubuh yang betul.</p>
+<p>Ketuk mikroorganisma, kemudian ketuk bahagian tubuh yang betul.</p>
 
 <div>
     <span id="scoreBox">Score: 0</span>
@@ -143,7 +148,7 @@
 
 <script>
 let score = 0;
-let draggedItem = null;
+let selectedItem = null;
 
 const scoreBox = document.getElementById("scoreBox");
 const startBox = document.getElementById("startBox");
@@ -161,54 +166,41 @@ document.getElementById("resetBtn").onclick = () => {
     });
     score = 0;
     scoreBox.textContent = "Score: 0";
+    selectedItem = null;
 };
 
-// MOUSE SUPPORT
-document.addEventListener("mousedown", e => {
-    if (e.target.classList.contains("item")) {
-        draggedItem = e.target;
-    }
+// Click to select item
+document.querySelectorAll(".item").forEach(item => {
+    item.addEventListener("click", () => {
+        selectedItem = item;
+        document.querySelectorAll(".item").forEach(i => i.style.border = "none");
+        item.style.border = "2px solid #0077b6";
+    });
 });
 
-document.addEventListener("mouseup", () => draggedItem = null);
-
-// TOUCH SUPPORT
-document.addEventListener("touchstart", e => {
-    if (e.target.classList.contains("item")) {
-        draggedItem = e.target;
-    }
-});
-
-document.addEventListener("touchend", () => draggedItem = null);
-
+// Click dropzone to place item
 document.querySelectorAll(".dropzone").forEach(zone => {
+    zone.addEventListener("click", () => {
+        if (!selectedItem) return;
 
-    zone.addEventListener("mouseenter", () => zone.classList.add("highlight"));
-    zone.addEventListener("mouseleave", () => zone.classList.remove("highlight"));
+        const correct = selectedItem.dataset.target;
+        const zoneName = zone.dataset.zone;
 
-    zone.addEventListener("mouseup", () => handleDrop(zone));
-    zone.addEventListener("touchend", () => handleDrop(zone));
+        if (correct === zoneName) {
+            selectedItem.classList.add("correct");
+            selectedItem.classList.remove("wrong");
+            updateScore(1);
+        } else {
+            selectedItem.classList.add("wrong");
+            selectedItem.classList.remove("correct");
+            updateScore(-1);
+        }
+
+        zone.appendChild(selectedItem);
+        selectedItem.style.border = "none";
+        selectedItem = null;
+    });
 });
-
-function handleDrop(zone) {
-    if (!draggedItem) return;
-
-    const correct = draggedItem.dataset.target;
-    const zoneName = zone.dataset.zone;
-
-    if (correct === zoneName) {
-        draggedItem.classList.add("correct");
-        draggedItem.classList.remove("wrong");
-        updateScore(1);
-    } else {
-        draggedItem.classList.add("wrong");
-        draggedItem.classList.remove("correct");
-        updateScore(-1);
-    }
-
-    zone.appendChild(draggedItem);
-    draggedItem = null;
-}
 </script>
 
 </body>
